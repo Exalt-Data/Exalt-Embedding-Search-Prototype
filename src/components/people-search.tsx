@@ -29,7 +29,17 @@ type Match = {
   political_donor_type: string | null;
   tags: string[];
   summary: string;
-  similarity: number;
+  similarity: number | null;
+};
+
+type SearchIntent = {
+  semanticQuery: string;
+  filters: {
+    field: "language" | "party" | "ethnicity";
+    operator: "includes" | "excludes";
+    value: string;
+  }[];
+  summary: string | null;
 };
 
 const datasets: { key: DatasetKey; label: string; count: string }[] = [
@@ -41,6 +51,7 @@ export function PeopleSearch() {
   const [dataset, setDataset] = useState<DatasetKey>("customer_visible");
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
+  const [intent, setIntent] = useState<SearchIntent | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,8 +80,10 @@ export function PeopleSearch() {
       }
 
       setMatches(payload.matches ?? []);
+      setIntent(payload.intent ?? null);
     } catch (searchError) {
       setMatches([]);
+      setIntent(null);
       setError(
         searchError instanceof Error
           ? searchError.message
@@ -87,6 +100,10 @@ export function PeopleSearch() {
   }
 
   const selectedDataset = datasets.find((item) => item.key === dataset);
+  const semanticIntent =
+    intent?.semanticQuery && intent.semanticQuery !== "people profiles"
+      ? intent.semanticQuery
+      : null;
 
   return (
     <main className="min-h-screen bg-[#f6f7f9] text-[#15181e]">
@@ -165,6 +182,13 @@ export function PeopleSearch() {
           </div>
         ) : null}
 
+        {intent?.summary || semanticIntent ? (
+          <div className="grid gap-1 rounded-lg border border-[#bae6fd] bg-[#eff6ff] px-4 py-3 text-sm text-[#1e3a8a]">
+            {intent?.summary ? <div>Applied filters: {intent.summary}</div> : null}
+            {semanticIntent ? <div>Semantic match: {semanticIntent}</div> : null}
+          </div>
+        ) : null}
+
         <section className="grid gap-3">
           {matches.length === 0 && !isLoading ? (
             <div className="rounded-lg border border-dashed border-[#cbd3df] bg-white px-4 py-10 text-center text-sm text-[#53606f]">
@@ -185,7 +209,9 @@ export function PeopleSearch() {
                       {match.full_name}
                     </h2>
                     <span className="rounded-full bg-[#eef2ff] px-2.5 py-1 text-xs font-medium text-[#3730a3]">
-                      {(match.similarity * 100).toFixed(1)}% match
+                      {match.similarity === null
+                        ? "Filtered"
+                        : `${(match.similarity * 100).toFixed(1)}% match`}
                     </span>
                     <span className="rounded-full bg-[#ecfdf3] px-2.5 py-1 text-xs font-medium text-[#027a48]">
                       {datasetLabel(match.dataset)}
