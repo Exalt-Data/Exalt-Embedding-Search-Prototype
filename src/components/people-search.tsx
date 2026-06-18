@@ -39,7 +39,7 @@ const datasets: { key: DatasetKey; label: string; count: string }[] = [
 
 export function PeopleSearch() {
   const [dataset, setDataset] = useState<DatasetKey>("customer_visible");
-  const [query, setQuery] = useState("who is interested in EVs or hybrid cars");
+  const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
