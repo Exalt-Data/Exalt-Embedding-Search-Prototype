@@ -16,9 +16,12 @@ The prototype uses two 1,000-row sample profile datasets:
 These sample datasets stand in for the full set of people Exalt would
 eventually recommend from.
 
-This prototype uses Gemini's `gemini-embedding-2` embedding model to convert
-profile text and user queries into numeric vectors. Ranking happens in Supabase
-Postgres with pgvector similarity search.
+This prototype uses Gemini's
+[`gemini-embedding-2`](https://ai.google.dev/gemini-api/docs/embeddings)
+embedding model to convert profile text and user queries into numeric vectors.
+Ranking happens in
+[Supabase Postgres with pgvector](https://supabase.com/docs/guides/database/extensions/pgvector)
+similarity search.
 
 ## Why This Matters For Exalt
 
@@ -51,9 +54,11 @@ script combines demographic, location, household, financial, political,
 lifestyle, charitable, diaspora, and tag fields into one text summary for that
 person.
 
-Gemini's `gemini-embedding-2` embedding model converts that text block into a
-768-dimensional numeric vector. The vector is stored in Supabase Postgres using
-pgvector.
+Gemini's
+[`gemini-embedding-2`](https://ai.google.dev/gemini-api/docs/embeddings)
+embedding model converts that text block into a 768-dimensional numeric vector.
+The vector is stored in
+[Supabase Postgres using pgvector](https://supabase.com/docs/guides/database/extensions/pgvector).
 
 When a user searches, the app embeds the query with the same embedding model.
 Supabase compares the query vector to stored record vectors using cosine
@@ -81,9 +86,11 @@ Ranked recommendation candidates
 
 - Import structured records from CSV.
 - Build a summary representation from fields that influence relevance.
-- Generate 768-dimensional vectors with Gemini's `gemini-embedding-2` embedding
-  model.
-- Store vectors in Supabase Postgres with pgvector.
+- Generate 768-dimensional vectors with Gemini's
+  [`gemini-embedding-2`](https://ai.google.dev/gemini-api/docs/embeddings)
+  embedding model.
+- Store vectors in
+  [Supabase Postgres with pgvector](https://supabase.com/docs/guides/database/extensions/pgvector).
 - Search using a short query, pasted tweet, article excerpt, newsletter, or
   policy memo.
 - Return ranked matches with similarity scores.
@@ -101,13 +108,14 @@ This prototype has three main pieces:
 
 ## Tech Stack
 
-- Next.js 16 App Router
-- React 19
-- TypeScript
-- Tailwind CSS 4
-- Supabase Postgres with pgvector
-- Gemini `gemini-embedding-2` embeddings via `@google/genai`
-- `csv-parse` for CSV import
+- [Next.js 16 App Router](https://nextjs.org/docs/app)
+- [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [Supabase Postgres with pgvector](https://supabase.com/docs/guides/database/extensions/pgvector)
+- [Gemini `gemini-embedding-2` embeddings](https://ai.google.dev/gemini-api/docs/embeddings)
+  via [`@google/genai`](https://googleapis.github.io/js-genai/)
+- [`csv-parse`](https://csv.js.org/parse/) for CSV import
 
 ## Project Structure
 
@@ -176,8 +184,17 @@ npm run import:profiles -- voters
 ```
 
 For each row, the script combines profile fields into a searchable summary. It
-then embeds that summary using Gemini's `gemini-embedding-2` model with
-`RETRIEVAL_DOCUMENT` and stores the vector in Supabase.
+then embeds that summary using Gemini's
+[`gemini-embedding-2`](https://ai.google.dev/gemini-api/docs/embeddings) model
+with `RETRIEVAL_DOCUMENT` and stores the vector in Supabase.
+
+## Product Links
+
+- [Live demo](https://exaltprototype.vercel.app/)
+- [Gemini embeddings documentation](https://ai.google.dev/gemini-api/docs/embeddings)
+- [Google Gen AI JavaScript SDK](https://googleapis.github.io/js-genai/)
+- [Supabase pgvector documentation](https://supabase.com/docs/guides/database/extensions/pgvector)
+- [Next.js App Router documentation](https://nextjs.org/docs/app)
 
 ## Running Locally
 
