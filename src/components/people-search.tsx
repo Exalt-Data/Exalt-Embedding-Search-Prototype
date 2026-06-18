@@ -101,8 +101,9 @@ export function PeopleSearch() {
                 Profile search
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#53606f] sm:text-base">
-                Search either uploaded dataset by intent, voter behavior,
-                demographics, finance, lifestyle signals, interests, or location.
+                Search either uploaded dataset with a short query, a tweet, or
+                pasted article text. Gemini embeds the text and returns the
+                closest matching profiles.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm sm:flex">
@@ -114,7 +115,7 @@ export function PeopleSearch() {
 
         <form
           onSubmit={handleSubmit}
-          className="grid gap-3 rounded-lg border border-[#d8dde6] bg-white p-3 shadow-sm lg:grid-cols-[240px_1fr_auto]"
+          className="grid gap-3 rounded-lg border border-[#d8dde6] bg-white p-3 shadow-sm lg:grid-cols-[240px_1fr]"
         >
           <label className="grid gap-1 text-sm">
             <span className="font-mono text-[11px] font-semibold uppercase text-[#697586]">
@@ -137,22 +138,22 @@ export function PeopleSearch() {
             </select>
           </label>
 
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1 text-sm lg:row-span-2">
             <span className="font-mono text-[11px] font-semibold uppercase text-[#697586]">
-              Query
+              Query, tweet, or article
             </span>
-            <input
+            <textarea
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="min-h-12 rounded-md border border-[#cbd3df] bg-white px-4 text-base text-[#15181e] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
-              placeholder="Ask about interests, profile traits, or needs..."
+              className="min-h-32 resize-y rounded-md border border-[#cbd3df] bg-white px-4 py-3 text-base leading-6 text-[#15181e] outline-none transition focus:border-[#2563eb] focus:ring-4 focus:ring-[#2563eb]/10"
+              placeholder="Paste a tweet, article excerpt, newsletter, policy memo, or type a short audience query..."
             />
           </label>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="min-h-12 self-end rounded-md bg-[#2563eb] px-5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#93a4bd]"
+            className="min-h-12 rounded-md bg-[#2563eb] px-5 text-sm font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-[#93a4bd] lg:self-end"
           >
             {isLoading ? "Searching" : "Search"}
           </button>
