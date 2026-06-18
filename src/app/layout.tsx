@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Civic People Search",
-  description: "Semantic search for civic outreach contacts",
+  title: "Exalt People Recommendation Prototype",
+  description: "Embedding-based people recommendation prototype for Exalt",
 };
 
 export default function RootLayout({

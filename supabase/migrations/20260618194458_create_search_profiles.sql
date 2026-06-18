@@ -1,8 +1,5 @@
 create extension if not exists vector with schema extensions;
 
-drop function if exists public.match_civic_people(vector(768), int, float);
-drop table if exists public.civic_people;
-
 create table if not exists public.search_profiles (
   id text primary key,
   dataset text not null check (dataset in ('customer_visible', 'voters')),
