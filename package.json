@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "import:people": "node --env-file=.env.local scripts/import-civic-people.mjs"
+    "import:profiles": "node --env-file=.env.local scripts/import-search-profiles.mjs",
+    "import:people": "npm run import:profiles"
   },
   "dependencies": {
     "@google/genai": "^2.8.0",

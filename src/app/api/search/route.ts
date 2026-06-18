@@ -5,13 +5,20 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
+const datasets = new Set(["customer_visible", "voters"]);
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       query?: unknown;
+      dataset?: unknown;
       limit?: unknown;
     };
     const query = typeof body.query === "string" ? body.query.trim() : "";
+    const dataset =
+      typeof body.dataset === "string" && datasets.has(body.dataset)
+        ? body.dataset
+        : "customer_visible";
     const limit = Math.min(
       Math.max(typeof body.limit === "number" ? body.limit : 12, 1),
       25,
@@ -22,8 +29,9 @@ export async function POST(request: Request) {
     }
 
     const queryEmbedding = await embedText(query, "RETRIEVAL_QUERY");
-    const { data, error } = await getSupabaseAdmin().rpc("match_civic_people", {
+    const { data, error } = await getSupabaseAdmin().rpc("match_search_profiles", {
       query_embedding: queryEmbedding,
+      dataset_filter: dataset,
       match_count: limit,
       match_threshold: 0,
     });
