@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { getRequiredEnv } from "./env";
 
 const EMBEDDING_MODEL = "gemini-embedding-2";
-const INTENT_MODEL = "gemini-3.5-flash";
+const INTENT_MODEL = "gemini-3.1-flash";
 export const EMBEDDING_DIMENSIONS = 768;
 
 let gemini: GoogleGenAI | null = null;

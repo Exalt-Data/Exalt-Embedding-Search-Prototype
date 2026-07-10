@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { embedText } from "@/lib/gemini";
+import { rerankMatches } from "@/lib/rerank";
 import {
   matchesSearchIntent,
   parseSearchQuery,
+  scoreProfileSignals,
   valuesForFilter,
+  type SearchIntent,
 } from "@/lib/search-query";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
@@ -12,6 +15,12 @@ export const runtime = "nodejs";
 
 const datasets = new Set(["customer_visible", "voters"]);
 const directFallbackLimit = 1000;
+// Max score boost for a profile matching every affinity signal. Cosine
+// similarities cluster within ~0.1 of each other here, so a full signal
+// match can outrank raw similarity while partial matches stay comparable.
+const affinityBoost = 0.15;
+// How many retrieval candidates the LLM reranker judges per topical search.
+const rerankPoolSize = 24;
 const searchProfileColumns = `
   id,
   dataset,
@@ -43,6 +52,8 @@ type SearchMatch = {
   language: string | null;
   party: string | null;
   ethnicity: string | null;
+  tags?: string[] | null;
+  summary?: string | null;
   similarity?: number | null;
 };
 
@@ -68,8 +79,16 @@ export async function POST(request: Request) {
     }
 
     const intent = await parseSearchQuery(query);
-    const queryEmbedding = await embedText(intent.semanticQuery, "RETRIEVAL_QUERY");
-    const rpcLimit = intent.filters.length ? Math.min(limit * 4, 50) : limit;
+    const queryEmbedding = await embedText(
+      intent.idealProfile ?? intent.semanticQuery,
+      "RETRIEVAL_QUERY",
+    );
+    const isTopical =
+      Boolean(intent.idealProfile) || intent.semanticQuery !== "people profiles";
+    const rpcLimit =
+      intent.filters.length || intent.signals.length || isTopical
+        ? Math.min(Math.max(limit * 4, rerankPoolSize), 50)
+        : limit;
     const includedLanguages = valuesForFilter(intent, "language", "includes");
     const excludedLanguages = valuesForFilter(intent, "language", "excludes");
     const includedParties = valuesForFilter(intent, "party", "includes");
@@ -108,9 +127,16 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    const matches = ((data ?? []) as SearchMatch[])
-      .filter((match) => matchesSearchIntent(match, intent))
-      .slice(0, limit);
+    const candidates = rankMatches(
+      ((data ?? []) as SearchMatch[]).filter((match) =>
+        matchesSearchIntent(match, intent),
+      ),
+      intent,
+      isTopical ? Math.max(limit, rerankPoolSize) : limit,
+    );
+    const matches = (
+      isTopical ? await rerankMatches(query, intent, candidates) : candidates
+    ).slice(0, limit);
     const directMatches =
       usedOutdatedFunctionFallback &&
       intent.filters.length &&
@@ -133,7 +159,7 @@ export async function POST(request: Request) {
 
 async function runDirectFilterFallback(
   dataset: string,
-  intent: Awaited<ReturnType<typeof parseSearchQuery>>,
+  intent: SearchIntent,
   limit: number,
 ) {
   const { data, error } = await getSupabaseAdmin()
@@ -146,10 +172,33 @@ async function runDirectFilterFallback(
     throw error;
   }
 
-  return ((data ?? []) as SearchMatch[])
-    .filter((match) => matchesSearchIntent(match, intent))
-    .slice(0, limit)
-    .map((match) => ({ ...match, similarity: null }));
+  return rankMatches(
+    ((data ?? []) as SearchMatch[])
+      .filter((match) => matchesSearchIntent(match, intent))
+      .map((match) => ({ ...match, similarity: null })),
+    intent,
+    limit,
+  );
+}
+
+function rankMatches<T extends SearchMatch>(
+  matches: T[],
+  intent: SearchIntent,
+  limit: number,
+) {
+  return matches
+    .map((match) => {
+      const { affinity, matchedSignals } = scoreProfileSignals(match.tags, intent);
+
+      return {
+        ...match,
+        affinity,
+        matched_signals: matchedSignals,
+        score: (match.similarity ?? 0) + affinityBoost * (affinity ?? 0),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
 }
 
 function isOutdatedMatchFunctionError(error: { code?: string; message?: string }) {

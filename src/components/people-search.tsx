@@ -30,15 +30,22 @@ type Match = {
   tags: string[];
   summary: string;
   similarity: number | null;
+  affinity?: number | null;
+  matched_signals?: string[];
+  score?: number;
+  relevance?: number | null;
+  reason?: string | null;
 };
 
 type SearchIntent = {
   semanticQuery: string;
+  idealProfile: string | null;
   filters: {
     field: "language" | "party" | "ethnicity";
     operator: "includes" | "excludes";
     value: string;
   }[];
+  signals: { tag: string; weight: number }[];
   summary: string | null;
 };
 
@@ -182,10 +189,23 @@ export function PeopleSearch() {
           </div>
         ) : null}
 
-        {intent?.summary || semanticIntent ? (
+        {intent?.summary || semanticIntent || intent?.signals?.length || intent?.idealProfile ? (
           <div className="grid gap-1 rounded-lg border border-[#bae6fd] bg-[#eff6ff] px-4 py-3 text-sm text-[#1e3a8a]">
             {intent?.summary ? <div>Applied filters: {intent.summary}</div> : null}
             {semanticIntent ? <div>Semantic match: {semanticIntent}</div> : null}
+            {intent?.signals?.length ? (
+              <div>
+                Audience signals:{" "}
+                {intent.signals
+                  .map((signal) => `${signal.tag} ×${signal.weight}`)
+                  .join(" · ")}
+              </div>
+            ) : null}
+            {intent?.idealProfile ? (
+              <div className="text-[#3b5bab]">
+                Matching against ideal profile: {intent.idealProfile}
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -213,6 +233,16 @@ export function PeopleSearch() {
                         ? "Filtered"
                         : `${(match.similarity * 100).toFixed(1)}% match`}
                     </span>
+                    {match.matched_signals?.length && intent?.signals?.length ? (
+                      <span className="rounded-full bg-[#fef3c7] px-2.5 py-1 text-xs font-medium text-[#92400e]">
+                        {match.matched_signals.length}/{intent.signals.length} signals
+                      </span>
+                    ) : null}
+                    {typeof match.relevance === "number" ? (
+                      <span className="rounded-full bg-[#e0f2fe] px-2.5 py-1 text-xs font-medium text-[#075985]">
+                        {match.relevance}% relevant
+                      </span>
+                    ) : null}
                     <span className="rounded-full bg-[#ecfdf3] px-2.5 py-1 text-xs font-medium text-[#027a48]">
                       {datasetLabel(match.dataset)}
                     </span>
@@ -235,15 +265,31 @@ export function PeopleSearch() {
                 </dl>
               </div>
 
+              {match.reason ? (
+                <p className="mt-3 rounded-md bg-[#f0f9ff] px-3 py-2 text-sm italic leading-6 text-[#0c4a6e]">
+                  {match.reason}
+                </p>
+              ) : null}
+
               <div className="mt-4 flex flex-wrap gap-2">
-                {match.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-[#f1f5f9] px-2.5 py-1 text-xs text-[#334155]"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {match.tags.map((tag) => {
+                  const isMatchedSignal = match.matched_signals?.some(
+                    (signal) => signal.toLowerCase() === tag.toLowerCase(),
+                  );
+
+                  return (
+                    <span
+                      key={tag}
+                      className={
+                        isMatchedSignal
+                          ? "rounded-full bg-[#fef3c7] px-2.5 py-1 text-xs font-medium text-[#92400e]"
+                          : "rounded-full bg-[#f1f5f9] px-2.5 py-1 text-xs text-[#334155]"
+                      }
+                    >
+                      {tag}
+                    </span>
+                  );
+                })}
               </div>
 
               <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#53606f]">
